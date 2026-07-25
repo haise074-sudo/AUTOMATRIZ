@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub de Matrices Estratégicas + IA (Completo)</title>
+    <style>
+        :root {
+            --primary: #003B7A;
+            --primary-light: #0056A6;
+            --primary-soft: #DCEAF8;
+
+            --bg: #F5F7FA;
+            --panel: #FFFFFF;
+            --card: #FFFFFF;
+
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+            --text2: #6B7280;
+
+            --border: #D6DCE5;
+            --radius: 12px;
+
+            --success: #198754;
+            --warning: #F59E0B;
+            --danger: #DC3545;
+            --info: #0D6EFD;
+
+            /* Mapeo de colores semánticos especiales del FODA */
+            --green: #198754;   /* Fortalezas */
+            --oportunidades: #2E7D32; /* Oportunidades */
+            --debilidades: #F59E0B;   /* Debilidades */
+            --amenazas: #DC3545;      /* Amenazas */
+
+            /* Para mantener compatibilidad con variables antiguas */
+            --accent: #003B7A;
+            --accent2: #0056A6;
+            --gold: #F59E0B;
+            --red: #DC3545;
+
+            /* Variables de soporte para temas */
+            --bg-alt: #F8FAFC;
+            --input-bg: #FFFFFF;
+            --track-bg: #E9ECEF;
+        }
+
+        /* Variables para el modo oscuro */
+        body.dark-theme {
+            --bg: #0A0E14;
+            --panel: #111820;
+            --card: #182230;
+
+            --text: #E2E8F0;
+            --text-secondary: #94A3B8;
+            --text2: #94A3B8;
+
+            --border: rgba(255, 255, 255, 0.08);
+
+            --primary-soft: rgba(0, 86, 166, 0.25);
+            --primary-light: #0077E6;
+
+            --green: #10B981;
+            --oportunidades: #34D399;
+            --success: #10B981;
+
+            --bg-alt: #1F2E45;
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --track-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Inter, Roboto, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition: background-color 0.3s ease, color 0.3s ease; }
+        .app { display:flex; min-height:100vh; }
+        .sidebar { width:280px; min-width:280px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; z-index:100; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .sidebar-header { padding:24px 20px; border-bottom:1px solid var(--border); text-align:center; background:var(--primary); color:#FFFFFF; }
+        .sidebar-header h2 { font-size:1.15em; font-weight:800; color:#FFFFFF; letter-spacing:0.5px; text-transform:uppercase; }
+        .sidebar-header p { font-size:0.72em; color:var(--primary-soft); margin-top:6px; letter-spacing:0.5px; text-transform:uppercase; }
+        .sidebar-nav { flex:1; padding:10px; }
+        .nav-section { margin-bottom:8px; }
+        .nav-title { font-size:0.72em; color:var(--primary); padding:12px 14px 6px; font-weight:700; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+        .nav-title::after { content:''; flex:1; height:1px; background:var(--border); }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 14px; margin:2px 8px; border-radius:8px; cursor:pointer; font-size:0.88em; color:var(--text-secondary); border:1px solid transparent; transition:all 0.2s ease; }
+        .nav-item:hover { background:var(--primary-soft); color:var(--primary); transform:translateX(3px); }
+        .nav-item.active { background:var(--primary); color:#FFFFFF; border-color:var(--primary); font-weight:600; }
+        .nav-item .icon { font-size:1.1em; width:24px; text-align:center; }
+        .nav-item.active .icon { color:#FFFFFF; }
+        .nav-item .num { font-size:0.72em; background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:10px; margin-left:auto; font-weight:600; color:inherit; }
+        .nav-item.active .num { background:rgba(255,255,255,0.2); color:#FFFFFF; }
+        .sidebar-footer { padding:16px; border-top:1px solid var(--border); text-align:center; font-size:0.72em; color:var(--text-secondary); background:var(--bg); transition: background-color 0.3s ease; }
+        
+        body.dark-theme .nav-title { color: var(--primary-light); }
+        body.dark-theme .nav-item:hover { color: #FFFFFF; }
+        body.dark-theme .nav-item.active { border-color: var(--primary-light); }
+
+        .main { flex:1; padding:25px; overflow-y:auto; max-height:100vh; }
+        .panel { display:none; animation:fadeIn 0.4s ease; max-width:1100px; margin:0 auto; }
+        .panel.active { display:block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+        .header { margin-bottom:20px; padding-bottom:15px; border-bottom:2px solid var(--border); position:relative; }
+        .header::after { content:''; position:absolute; bottom:-2px; left:0; width:60px; height:2px; background:var(--primary); }
+        .header h2 { font-size:1.8em; font-weight:700; color:var(--primary); }
+        body.dark-theme .header h2 { color: var(--primary-light); }
+        .header .desc { color:var(--text-secondary); font-size:0.9em; }
+        .vinc { background:var(--primary-soft); border:1px solid rgba(0,59,122,0.15); border-radius:10px; padding:12px 16px; margin-bottom:18px; font-size:0.82em; display:flex; gap:8px; align-items:center; flex-wrap:wrap; color:var(--primary); font-weight:500; }
+        body.dark-theme .vinc { color: #FFFFFF; }
+        .vinc .arr { color:var(--primary-light); font-weight:bold; }
+        .form-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:18px; padding:18px; background:var(--card); border-radius:var(--radius); border:1px solid var(--border); box-shadow:0 8px 24px rgba(0,59,122,.08); transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .form-group { display:flex; flex-direction:column; gap:4px; }
+        .form-group label { font-size:0.78em; color:var(--text-secondary); font-weight:600; }
+        .form-group input, .form-group select { padding:10px 14px; border:1px solid var(--border); border-radius:10px; background:var(--input-bg); color:var(--text); font-size:0.9em; min-width:120px; transition:all 0.3s ease; font-family:inherit; }
+        .form-group input:focus, .form-group select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,59,122,0.15); }
+        .tbl-wrap { overflow-x:auto; margin:15px 0; border-radius:var(--radius); border:1px solid var(--border); box-shadow:0 8px 24px rgba(0,59,122,.08); transition: border-color 0.3s ease; }
+        table { width:100%; border-collapse:collapse; background:var(--card); transition: background-color 0.3s ease; }
+        th { background:var(--primary); padding:14px 10px; font-size:0.75em; color:#FFFFFF; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid var(--border); }
+        td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--border); font-size:0.88em; color:var(--text); transition: border-color 0.3s ease; }
+        tr:nth-child(even) td { background:var(--bg-alt); }
+        tr:nth-child(odd) td { background:var(--card); }
+        tr:hover td { background:var(--primary-soft) !important; }
+        td input, td select { width:95%; padding:8px; border:1px solid var(--border); border-radius:10px; background:var(--input-bg); color:var(--text); font-size:0.85em; text-align:center; transition:all 0.3s ease; font-family:inherit; }
+        td input[type="text"] { text-align:left; }
+        td input:focus, td select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,59,122,0.12); }
+        .peso-editable { background:var(--primary-soft)!important; border-color:var(--primary)!important; font-weight:700!important; color:var(--primary)!important; }
+        body.dark-theme .peso-editable { color: #FFFFFF !important; }
+        .peso-indicator { display:inline-block; padding:8px 16px; border-radius:20px; font-weight:700; font-size:0.85em; margin:5px; }
+        .peso-ok { background:rgba(25,135,84,0.1); color:var(--success); border:1px solid rgba(25,135,84,0.25); }
+        .peso-bad { background:rgba(220,53,69,0.1); color:var(--danger); border:1px solid rgba(220,53,69,0.25); }
+        .btn { padding:10px 20px; border-radius:10px; border:1px solid transparent; cursor:pointer; font-weight:600; font-size:0.88em; transition:all 0.25s ease; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-family:inherit; }
+        .btn-primary { background:var(--primary); color:#FFFFFF; border:1px solid var(--primary); }
+        .btn-primary:hover { background:var(--primary-light); border-color:var(--primary-light); }
+        .btn-success { background:var(--success); color:#FFFFFF; border:1px solid var(--success); }
+        .btn-success:hover { background:#157347; border-color:#157347; }
+        .btn-warning { background:var(--warning); color:#FFFFFF; border:1px solid var(--warning); }
+        .btn-warning:hover { background:#D97706; border-color:#D97706; }
+        .btn-red { background:transparent; border:1px solid var(--danger); color:var(--danger); padding:4px 8px; border-radius:6px; font-size:0.75em; cursor:pointer; transition:all 0.2s; }
+        .btn-red:hover { background:rgba(220,53,69,0.1); }
+        .btn-sm { padding:6px 14px; font-size:0.78em; border-radius:8px; }
+        .btn-ia { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:#fff; font-weight:700; box-shadow:0 4px 12px rgba(0,59,122,0.2); }
+        .btn-ia:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,59,122,0.35); }
+        .spelling-btn { font-size:0.75em; padding:4px 8px; background:var(--card); border:1px solid var(--primary); color:var(--primary); border-radius:6px; cursor:pointer; margin-left:6px; transition:all 0.2s ease; }
+        .spelling-btn:hover { background:var(--primary-soft); }
+        body.dark-theme .spelling-btn { color: #FFFFFF; border-color: var(--primary-light); }
+        body.dark-theme .spelling-btn:hover { background: var(--primary-soft); }
+        .badge { display:inline-block; padding:4px 10px; border-radius:15px; font-size:0.7em; font-weight:700; text-transform:uppercase; }
+        .badge-f { background:rgba(25,135,84,0.15); color:var(--green); border:1px solid rgba(25,135,84,0.3); }
+        .badge-d { background:rgba(245,158,11,0.15); color:var(--debilidades); border:1px solid rgba(245,158,11,0.3); }
+        .badge-o { background:rgba(46,125,50,0.15); color:var(--oportunidades); border:1px solid rgba(46,125,50,0.3); }
+        .badge-a { background:rgba(220,53,69,0.15); color:var(--amenazas); border:1px solid rgba(220,53,69,0.3); }
+        .analisis { background:var(--card); border:1px solid var(--border); border-top:3px solid var(--primary); border-radius:var(--radius); padding:25px; margin-top:20px; position:relative; box-shadow:0 8px 24px rgba(0,59,122,.12); transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .analisis::before { content:'ANALISIS'; position:absolute; top:-12px; left:20px; background:var(--primary); color:#FFFFFF; padding:4px 14px; border-radius:12px; font-size:0.72em; font-weight:700; letter-spacing:1px; }
+        .analisis ul li { background:var(--bg) !important; color:var(--text) !important; border-left-color:var(--primary) !important; }
+        .veredicto { padding:12px 18px; border-radius:10px; margin:10px 0; font-weight:600; }
+        .v-ok { background:rgba(25,135,84,0.1); border:1px solid rgba(25,135,84,0.3); color:var(--success); }
+        .v-mid { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:var(--warning); }
+        .v-bad { background:rgba(220,53,69,0.1); border:1px solid rgba(220,53,69,0.3); color:var(--danger); }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:15px 0; }
+        .grid-card { background:var(--card); border-radius:var(--radius); padding:14px; text-align:center; border:1px solid var(--border); box-shadow:0 8px 24px rgba(0,59,122,.08); transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .grid-card h5 { font-size:0.72em; color:var(--text-secondary); text-transform:uppercase; }
+        .grid-card .val { font-size:1.6em; font-weight:800; }
+        .grafico { background:var(--track-bg); border-radius:12px; margin:8px 0; overflow:hidden; height:22px; transition: background-color 0.3s ease; }
+        .barra { height:100%; border-radius:12px; transition:width 0.8s ease; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:0.7em; font-weight:700; color:#FFFFFF; }
+        .barra-azul { background:linear-gradient(90deg,var(--primary),var(--primary-light)); }
+        .barra-verde { background:linear-gradient(90deg,var(--success),var(--oportunidades)); }
+        .mt15 { margin-top:15px; } .mt20 { margin-top:20px; } .text-center { text-align:center; }
+        
+        /* Semantics and Category headers overrides */
+        .text-green { color:var(--green) !important; }
+        .text-red { color:var(--danger) !important; }
+        .text-accent { color:var(--oportunidades) !important; }
+        .gold { color:var(--danger) !important; } /* Amenazas styled as red/danger */
+        
+        /* Contextual adjustments for Debilidades headers using :has() */
+        .panel:has(#efi_d_factor) h3.text-red { color: var(--warning) !important; }
+        .panel:has(#tbl_home_d) h3.text-red { color: var(--warning) !important; }
+        .panel:has(#tblFODA_D) h3.text-red { color: var(--warning) !important; }
+        
+        .empty { text-align:center; padding:30px; color:var(--text-secondary); font-size:0.9em; }
+        .download-bar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding:15px 20px; background:var(--card); border-radius:var(--radius); border:2px dashed var(--primary); margin:15px 0; justify-content:center; box-shadow:0 8px 24px rgba(0,59,122,.08); }
+        .download-bar span { font-weight:700; color:var(--primary); font-size:0.9em; }
+        .ia-config { background:var(--card); border:1px solid var(--border); border-top:3px solid var(--primary-light); border-radius:var(--radius); padding:20px; margin:20px 0; box-shadow:0 8px 24px rgba(0,59,122,.08); }
+        .ia-config h4 { color:var(--primary); margin-bottom:12px; }
+        #iaResultado { white-space:pre-wrap; line-height:1.5; }
+        .red-label { color: var(--danger); font-weight: 700; text-transform: uppercase; font-size: 0.8em; }
+        .api-input { border: 1px solid var(--danger) !important; background: rgba(220,53,69,0.05) !important; font-weight: bold; color: var(--danger) !important; }
+        .api-input:focus { box-shadow:0 0 0 3px rgba(220,53,69,0.15) !important; }
+        .btn-limpiar { background: var(--danger); color: #FFFFFF; margin: 12px 8px; width: calc(100% - 16px); justify-content: center; border: none; border-radius: 8px; padding: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-limpiar:hover { background: #C82333; }
+        #toastMsg { box-shadow: 0 10px 30px rgba(0,59,122,0.15) !important; }
+
+        /* Estilos del botón de tema */
+        .btn-theme {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid rgba(0, 59, 122, 0.15);
+            margin: 4px 8px;
+            width: calc(100% - 16px);
+            justify-content: center;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.88em;
+            font-family: inherit;
+        }
+        .btn-theme:hover {
+            background: var(--primary-light);
+            color: #FFFFFF;
+            border-color: var(--primary-light);
+        }
+        body.dark-theme .btn-theme {
+            background: rgba(255, 255, 255, 0.05);
+            color: #FFFFFF;
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        body.dark-theme .btn-theme:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>MATRICES DE DIAGNOSTICO</h2>
+            <p>Analisis estrategico integrado</p>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section"><div class="nav-title">INICIO</div>
+                <div class="nav-item active" data-panel="home"><span class="icon">H</span> HOME <span class="num">*</span></div>
+                <div class="nav-item" data-panel="foda"><span class="icon">F</span> FODA Numerico <span class="num">1</span></div>
+            </div>
+            <div class="nav-section"><div class="nav-title">ANALISIS EXTERNO</div>
+                <div class="nav-item" data-panel="pestel"><span class="icon">P</span> PESTEL <span class="num">2</span></div>
+                <div class="nav-item" data-panel="pets"><span class="icon">E</span> PETS <span class="num">3</span></div>
+                <div class="nav-item" data-panel="porter"><span class="icon">F</span> 5 F. Porter <span class="num">4</span></div>
+                <div class="nav-item" data-panel="efe"><span class="icon">E</span> EFE <span class="num">5</span></div>
+            </div>
+            <div class="nav-section"><div class="nav-title">ANALISIS INTERNO</div>
+                <div class="nav-item" data-panel="efi"><span class="icon">I</span> EFI <span class="num">6</span></div>
+            </div>
+            <div class="nav-section"><div class="nav-title">RIESGO</div>
+                <div class="nav-item" data-panel="vulnerabilidad"><span class="icon">V</span> Vulnerabilidad <span class="num">7</span></div>
+                <div class="nav-item" data-panel="aprovechabilidad"><span class="icon">A</span> Aprovechabilidad <span class="num">8</span></div>
+            </div>
+            <div class="nav-section"><div class="nav-title">PORTAFOLIO</div>
+                <div class="nav-item" data-panel="bcg"><span class="icon">B</span> BCG <span class="num">9</span></div>
+                <div class="nav-item" data-panel="mckinsey"><span class="icon">M</span> McKinsey <span class="num">10</span></div>
+                <div class="nav-item" data-panel="peyea"><span class="icon">P</span> PEYEA <span class="num">11</span></div>
+            </div>
+            <div class="nav-section"><div class="nav-title">DECISION</div>
+                <div class="nav-item" data-panel="made"><span class="icon">D</span> MADE <span class="num">12</span></div>
+                <div class="nav-item" data-panel="madi"><span class="icon">M</span> MADI <span class="num">13</span></div>
+            </div>
+            <div class="nav-section"><div class="nav-title">FINAL</div>
+                <div class="nav-item" data-panel="holmes"><span class="icon">H</span> INFORME HOLMES <span class="num">14</span></div>
+            </div>
+        </nav>
+        <button class="btn-theme" onclick="toggleTheme()" id="themeToggleBtn"><span class="icon">🌙</span> Modo Oscuro</button>
+        <button class="btn-limpiar" onclick="limpiarTodo()">Limpiar todos los datos</button>
+        <div class="sidebar-footer">Auto-guardado cada cambio<br>Datos vinculados automaticamente<br>Con inteligencia artificial</div>
+    </aside>
+    <main class="main" id="mainContent"></main>
+</div>
+
+<script>
+// ============ DATOS GLOBALES ============
+let nextId = Date.now();
+function generateId() { return 'id_' + (nextId++); }
+
+const estructuraInicial = {
+    home: { fortalezas:[], oportunidades:[], debilidades:[], amenazas:[] },
+    pestel: { politico:[], economico:[], social:[], tecnologico:[], ecologico:[], legal:[] },
+    pets: { politico:[], economico:[], social:[], tecnologico:[] },
+    porter: { rivalidad:[], nuevosEntrantes:[], sustitutos:[], poderProveedores:[], poderCompradores:[] },
+    efe: { oportunidades:[], amenazas:[] },
+    efi: { fortalezas:[], debilidades:[] },
+    foda: { fortalezas:[], oportunidades:[], debilidades:[], amenazas:[] },
+    vulnerabilidad: { factores:[] },
+    aprovechabilidad: { factores:[] },
+    bcg: { productos:[] },
+    mckinsey: { unidades:[] },
+    peyea: { ff:[], vc:[], ee:[], fi:[] },
+    made: { estrategias:[] },
+    madi: { estrategias:[] }
+};
+
+const D = JSON.parse(JSON.stringify(estructuraInicial));
+
+function load() { const g = localStorage.getItem('mat14v2'); if(g) { try { Object.assign(D, JSON.parse(g)); } catch(e) {} } }
+function save() { localStorage.setItem('mat14v2', JSON.stringify(D)); }
+
+function limpiarTodo() {
+    if (confirm('¿Estas seguro? Se borraran todos los datos de todas las matrices y no se podran recuperar.')) {
+        for (let key in D) {
+            if (estructuraInicial.hasOwnProperty(key)) {
+                D[key] = JSON.parse(JSON.stringify(estructuraInicial[key]));
+            }
+        }
+        localStorage.removeItem('mat14v2');
+        localStorage.removeItem('openai_api_key');
+        nextId = Date.now();
+        save();
+        toast('Todos los datos han sido eliminados.');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const homeItem = document.querySelector('[data-panel="home"]');
+        if (homeItem) homeItem.classList.add('active');
+        render('home');
+    }
+}
+
+function toast(msg) {
+    let t = document.getElementById('toastMsg');
+    if (!t) { t = document.createElement('div'); t.id = 'toastMsg'; t.style.cssText = 'position:fixed;bottom:30px;right:30px;z-index:9999;background:var(--card);border:1px solid var(--accent);padding:15px 25px;border-radius:30px;color:var(--text);font-weight:600;transition:all 0.4s;opacity:0;transform:translateY(20px);pointer-events:none;'; document.body.appendChild(t); }
+    t.textContent = msg; t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+    clearTimeout(t._t); t._t = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, 2500);
+}
+
+document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', function() {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        render(this.getAttribute('data-panel'));
+    });
+});
+
+function render(panelId) {
+    const main = document.getElementById('mainContent');
+    const panels = {
+        home: renderHome, foda: renderFODA, pestel: renderPESTEL, pets: renderPETS, porter: renderPorter,
+        efe: renderEFE, efi: renderEFI, vulnerabilidad: renderVul, aprovechabilidad: renderAprov,
+        bcg: renderBCG, mckinsey: renderMcK, peyea: renderPEYEA, made: renderMADE, madi: renderMADI, holmes: renderHolmes
+    };
+    main.innerHTML = (panels[panelId] || renderHome)();
+    setTimeout(() => initPanel(panelId), 50);
+}
+
+// ============ HELPERS ============
+function updateHomeArray(arrName, id, campo, valor) {
+    const arr = D.home[arrName];
+    const idx = arr.findIndex(f => f.id === id);
+    if (idx !== -1) { arr[idx][campo] = valor; save(); }
+}
+function propagateFactorNameChange(homeId, newFactor, arrName) {
+    for (const key in D.efe) D.efe[key].forEach(f => { if (f.homeId === homeId) f.factor = newFactor; });
+    for (const key in D.efi) D.efi[key].forEach(f => { if (f.homeId === homeId) f.factor = newFactor; });
+    for (const key in D.foda) D.foda[key].forEach(f => { if (f.homeId === homeId) f.factor = newFactor; });
+    D.vulnerabilidad.factores.forEach(f => {
+        if (f.homeIdDebilidad === homeId) f.debilidad = newFactor;
+        if (f.homeIdAmenaza === homeId) f.amenaza = newFactor;
+    });
+    D.aprovechabilidad.factores.forEach(f => {
+        if (f.homeIdFortaleza === homeId) f.fortaleza = newFactor;
+        if (f.homeIdOportunidad === homeId) f.oportunidad = newFactor;
+    });
+    save();
+}
+function removeFromAllDerived(removeId) {
+    if (!removeId) return;
+    for (const key in D.efe) D.efe[key] = D.efe[key].filter(f => f.homeId !== removeId);
+    for (const key in D.efi) D.efi[key] = D.efi[key].filter(f => f.homeId !== removeId);
+    for (const key in D.foda) D.foda[key] = D.foda[key].filter(f => f.homeId !== removeId);
+    D.vulnerabilidad.factores = D.vulnerabilidad.factores.filter(f => f.homeIdDebilidad !== removeId && f.homeIdAmenaza !== removeId);
+    D.aprovechabilidad.factores = D.aprovechabilidad.factores.filter(f => f.homeIdFortaleza !== removeId && f.homeIdOportunidad !== removeId);
+    save();
+}
+function normalizarPesosArray(arr) {
+    const suma = arr.reduce((s,f) => s + (f.peso||0), 0);
+    if (suma === 0) { const eq = 1/arr.length; arr.forEach(f => f.peso = parseFloat(eq.toFixed(3))); }
+    else if (Math.abs(suma - 1) > 0.001) arr.forEach(f => f.peso = parseFloat(((f.peso||0)/suma).toFixed(3)));
+}
+
+// ============ HOME ============
+function renderHome() {
+    return `<div class="panel active"><div class="header"><h2>HOME</h2><p class="desc">Ingrese factores base. Se sincronizan con las demas matrices.</p></div>
+    <div class="vinc"><strong>Flujo:</strong> HOME → FODA → EFI/EFE → Vulnerabilidad/Aprovechabilidad → MADE/MADI → HOLMES</div>
+    ${renderHomeCategory('Fortalezas','f','text-green')}
+    ${renderHomeCategory('Debilidades','d','text-red')}
+    ${renderHomeCategory('Oportunidades','o','text-accent')}
+    ${renderHomeCategory('Amenazas','a','gold')}
+    <button class="btn btn-success mt20" onclick="syncAllFromHome()">SINCRONIZAR A TODAS LAS MATRICES</button>
+    <div id="syncMsg" class="mt15 text-center"></div></div>`;
+}
+function renderHomeCategory(title, type, color) {
+    return `<h3 class="${color}">${title.toUpperCase()}</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Factor</label><input type="text" id="home_${type}_factor"></div>
+        <div class="form-group"><label>Valor (puede ser negativo)</label><input type="number" id="home_${type}_valor" value="${type==='f'||type==='o'?4:2}" step="any"></div>
+        <button class="btn btn-primary" onclick="addHome('${type}')">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Factor</th><th>Valor</th><th>Accion</th></tr></thead><tbody id="tbl_home_${type}"></tbody></table></div>
+    <div id="empty_home_${type}" class="empty">Sin ${title.toLowerCase()} registradas.</div>`;
+}
+function initHome() {
+    ['f','d','o','a'].forEach(t => {
+        const map = { f:'fortalezas', d:'debilidades', o:'oportunidades', a:'amenazas' };
+        const arr = D.home[map[t]] || [];
+        const tbody = document.getElementById('tbl_home_'+t);
+        const empty = document.getElementById('empty_home_'+t);
+        if (!tbody) return;
+        if (arr.length === 0) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+        if (empty) empty.style.display = 'none';
+        tbody.innerHTML = arr.map((item,i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><input type="text" value="${(item.factor||'').replace(/"/g,'&quot;')}" onchange="updateHomeField('${map[t]}','${item.id}','factor',this.value)"></td>
+                <td><input type="number" value="${item.valor||0}" step="any" onchange="updateHomeField('${map[t]}','${item.id}','valor',parseFloat(this.value)||0)"></td>
+                <td><button class="btn-red" onclick="delHome('${map[t]}','${item.id}')">X</button></td>
+            </tr>`).join('');
+    });
+}
+function addHome(tipo) {
+    const map = { f:'fortalezas', d:'debilidades', o:'oportunidades', a:'amenazas' };
+    const arrName = map[tipo];
+    const factor = document.getElementById(`home_${tipo}_factor`).value.trim();
+    const valor = parseFloat(document.getElementById(`home_${tipo}_valor`).value) || 0;
+    if (!factor) { toast('Describa el factor.'); return; }
+    D.home[arrName].push({ id: generateId(), factor, valor });
+    save();
+    document.getElementById(`home_${tipo}_factor`).value = '';
+    document.getElementById(`home_${tipo}_valor`).value = tipo==='f'||tipo==='o'?4:2;
+    initHome();
+    toast('Factor agregado a ' + arrName);
+}
+function updateHomeField(arrName, id, campo, valor) {
+    const arr = D.home[arrName];
+    const idx = arr.findIndex(f => f.id === id);
+    if (idx !== -1) {
+        arr[idx][campo] = valor;
+        if (campo === 'factor') propagateFactorNameChange(id, valor, arrName);
+        if (campo === 'valor') arr[idx].valor = parseFloat(valor) || 0;
+        save();
+    }
+}
+function delHome(arrName, id) {
+    D.home[arrName] = D.home[arrName].filter(f => f.id !== id);
+    removeFromAllDerived(id);
+    save();
+    initHome();
+    toast('Factor eliminado de HOME y matrices vinculadas');
+}
+function syncAllFromHome() {
+    const total = D.home.fortalezas.length + D.home.oportunidades.length + D.home.debilidades.length + D.home.amenazas.length;
+    if (total === 0) { toast('Ingrese al menos un factor en HOME.'); return; }
+    D.foda.fortalezas = D.home.fortalezas.map(f => ({ factor: f.factor, valor: f.valor, origen:'HOME', homeId: f.id }));
+    D.foda.oportunidades = D.home.oportunidades.map(o => ({ factor: o.factor, valor: o.valor, origen:'HOME', homeId: o.id }));
+    D.foda.debilidades = D.home.debilidades.map(d => ({ factor: d.factor, valor: d.valor, origen:'HOME', homeId: d.id }));
+    D.foda.amenazas = D.home.amenazas.map(a => ({ factor: a.factor, valor: a.valor, origen:'HOME', homeId: a.id }));
+    
+    const totalEFE = D.home.oportunidades.length + D.home.amenazas.length;
+    const pesoEFE = totalEFE > 0 ? 1/totalEFE : 0.5;
+    D.efe.oportunidades = D.home.oportunidades.map(o => ({ factor: o.factor, peso: pesoEFE, calificacion: Math.min(4, Math.max(1, Math.round(o.valor*0.8))), origen:'HOME', homeId: o.id }));
+    D.efe.amenazas = D.home.amenazas.map(a => ({ factor: a.factor, peso: pesoEFE, calificacion: Math.min(4, Math.max(1, Math.round(a.valor*0.8))), origen:'HOME', homeId: a.id }));
+    normalizarPesosArray([...D.efe.oportunidades, ...D.efe.amenazas]);
+    
+    const totalEFI = D.home.fortalezas.length + D.home.debilidades.length;
+    const pesoEFI = totalEFI > 0 ? 1/totalEFI : 0.5;
+    D.efi.fortalezas = D.home.fortalezas.map(f => ({ factor: f.factor, peso: pesoEFI, calificacion: Math.min(4, Math.max(1, Math.round(f.valor*0.8))), origen:'HOME', homeId: f.id }));
+    D.efi.debilidades = D.home.debilidades.map(d => ({ factor: d.factor, peso: pesoEFI, calificacion: Math.min(4, Math.max(1, Math.round(d.valor*0.8))), origen:'HOME', homeId: d.id }));
+    normalizarPesosArray([...D.efi.fortalezas, ...D.efi.debilidades]);
+    
+    D.vulnerabilidad.factores = [];
+    D.home.debilidades.forEach(d => D.home.amenazas.forEach(a => D.vulnerabilidad.factores.push({ debilidad: d.factor, amenaza: a.factor, impacto: Math.round((d.valor+a.valor)/2), origen:'HOME', homeIdDebilidad: d.id, homeIdAmenaza: a.id })));
+    if (D.vulnerabilidad.factores.length === 0 && D.home.debilidades.length > 0) D.vulnerabilidad.factores = D.home.debilidades.map(d => ({ debilidad: d.factor, amenaza: 'General', impacto: d.valor, origen:'HOME', homeIdDebilidad: d.id }));
+    
+    D.aprovechabilidad.factores = [];
+    D.home.fortalezas.forEach(f => D.home.oportunidades.forEach(o => D.aprovechabilidad.factores.push({ fortaleza: f.factor, oportunidad: o.factor, potencial: Math.round((f.valor+o.valor)/2), origen:'HOME', homeIdFortaleza: f.id, homeIdOportunidad: o.id })));
+    if (D.aprovechabilidad.factores.length === 0 && D.home.fortalezas.length > 0) D.aprovechabilidad.factores = D.home.fortalezas.map(f => ({ fortaleza: f.factor, oportunidad: 'General', potencial: f.valor, origen:'HOME', homeIdFortaleza: f.id }));
+    
+    save();
+    document.getElementById('syncMsg').innerHTML = '<span style="color:var(--green);font-weight:700;">Sincronizacion completada.</span>';
+    toast('Sincronizacion completada');
+}
+
+// ============ FODA NUMERICO EDITABLE ============
+function renderFODA() {
+    return `<div class="panel active"><div class="header"><h2>FODA NUMERICO</h2><p class="desc">Edite factores y valores. Los cambios se propagan a HOME y demas matrices.</p></div>
+    <div class="vinc"><strong>Vinculacion:</strong> Modificar un factor actualiza HOME y todas las derivadas.</div>
+    ${renderFodaCategory('Fortalezas','F','text-green')}
+    ${renderFodaCategory('Oportunidades','O','text-accent')}
+    ${renderFodaCategory('Debilidades','D','text-red')}
+    ${renderFodaCategory('Amenazas','A','gold')}
+    <button class="btn btn-success mt15" onclick="calcFODA()">Calcular Balance FODA</button><div id="resFODA"></div></div>`;
+}
+function renderFodaCategory(title, tipo, color) {
+    return `<h3 class="${color}">${title}</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Factor</label><input type="text" id="foda_${tipo}_factor"></div>
+        <div class="form-group"><label>Valor (puede ser negativo)</label><input type="number" id="foda_${tipo}_valor" value="4" step="any"></div>
+        <button class="btn btn-primary" onclick="addFodaEntry('${tipo}')">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Factor</th><th>Valor</th><th>Origen</th><th>Accion</th></tr></thead><tbody id="tblFODA_${tipo}"></tbody></table></div>
+    <div id="emptyFODA_${tipo}" class="empty">Sin ${title.toLowerCase()}</div>`;
+}
+function initFODA() {
+    ['F','O','D','A'].forEach(t => {
+        const map = { F:'fortalezas', O:'oportunidades', D:'debilidades', A:'amenazas' };
+        const arr = D.foda[map[t]] || [];
+        const tbody = document.getElementById('tblFODA_'+t);
+        const empty = document.getElementById('emptyFODA_'+t);
+        if (!tbody) return;
+        if (arr.length === 0) { tbody.innerHTML = ''; if(empty) empty.style.display='block'; return; }
+        if(empty) empty.style.display='none';
+        tbody.innerHTML = arr.map((f,i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><input type="text" value="${(f.factor||'').replace(/"/g,'&quot;')}" onchange="updateFodaEntry('${map[t]}',${i},'factor',this.value)"></td>
+                <td><input type="number" value="${f.valor||0}" step="any" onchange="updateFodaEntry('${map[t]}',${i},'valor',parseFloat(this.value)||0)"></td>
+                <td style="font-size:0.75em;">${f.origen||'Manual'}</td>
+                <td><button class="btn-red" onclick="delFodaEntry('${map[t]}',${i})">X</button>
+                ${f.origen==='HOME' ? `<button class="spelling-btn" onclick="propagateSpellingFromFoda('${map[t]}',${i})">↻</button>` : ''}</td>
+            </tr>`).join('');
+    });
+}
+function addFodaEntry(tipo) {
+    const map = { F:'fortalezas', O:'oportunidades', D:'debilidades', A:'amenazas' };
+    const arrName = map[tipo];
+    const factor = document.getElementById(`foda_${tipo}_factor`).value.trim();
+    const valor = parseFloat(document.getElementById(`foda_${tipo}_valor`).value) || 0;
+    if (!factor) { toast('Ingrese el factor.'); return; }
+    const newId = generateId();
+    D.home[arrName].push({ id: newId, factor, valor });
+    syncAllFromHome();
+    document.getElementById(`foda_${tipo}_factor`).value = '';
+    document.getElementById(`foda_${tipo}_valor`).value = 4;
+    initFODA();
+    toast('Factor agregado y sincronizado');
+}
+function updateFodaEntry(arrName, i, campo, valor) {
+    const entry = D.foda[arrName]?.[i];
+    if (!entry) return;
+    entry[campo] = valor;
+    if (campo === 'valor') entry.valor = parseFloat(valor) || 0;
+    if (entry.homeId) {
+        updateHomeArray(arrName, entry.homeId, campo, valor);
+        if (campo === 'factor') propagateFactorNameChange(entry.homeId, valor, arrName);
+    }
+    save();
+    if (campo === 'factor') initFODA();
+}
+function delFodaEntry(arrName, i) {
+    const entry = D.foda[arrName]?.[i];
+    if (!entry) return;
+    if (entry.homeId) {
+        D.home[arrName] = D.home[arrName].filter(f => f.id !== entry.homeId);
+        removeFromAllDerived(entry.homeId);
+    }
+    D.foda[arrName].splice(i,1);
+    save();
+    initFODA();
+    toast('Factor eliminado');
+}
+function propagateSpellingFromFoda(arrName, i) {
+    const entry = D.foda[arrName]?.[i];
+    if (!entry || !entry.homeId) return;
+    propagateFactorNameChange(entry.homeId, entry.factor, arrName);
+    toast('Ortografia propagada a todas las matrices');
+}
+function calcFODA() {
+    const f = D.foda.fortalezas.reduce((s,x)=>s+(x.valor||0),0);
+    const o = D.foda.oportunidades.reduce((s,x)=>s+(x.valor||0),0);
+    const d = D.foda.debilidades.reduce((s,x)=>s+(x.valor||0),0);
+    const a = D.foda.amenazas.reduce((s,x)=>s+(x.valor||0),0);
+    const fo = f+o, da = d+a;
+    document.getElementById('resFODA').innerHTML = `<div class="analisis"><h4>BALANCE FODA</h4><p>F+O: <strong style="color:var(--green);">${fo}</strong> | D+A: <strong style="color:var(--red);">${da}</strong></p><p>Diferencia neta: <span class="score">${fo-da}</span></p><div class="veredicto ${fo>da?'v-ok':fo===da?'v-mid':'v-bad'}">${fo>da?'Predominan factores positivos':fo===da?'Equilibrio':'Predominan factores negativos'}</div></div>`;
+}
+
+// ============ EFE ============
+function renderEFE() {
+    return `<div class="panel active"><div class="header"><h2>MATRIZ EFE</h2><p class="desc">Factores externos. Editable con propagacion de ortografia.</p></div>
+    <div class="vinc">Recibe de HOME | Alimenta a FODA, Vulnerabilidad</div>
+    <h3 class="text-accent">OPORTUNIDADES</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Factor</label><input type="text" id="efe_o_factor"></div>
+        <div class="form-group"><label>Peso (0-1)</label><input type="number" id="efe_o_peso" value="0.25" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>Calif. (1-4)</label><input type="number" id="efe_o_calif" value="3" min="1" max="4"></div>
+        <button class="btn btn-primary" onclick="addEFE('O')">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Factor</th><th>Peso</th><th>Calif.</th><th>Pond.</th><th>Origen</th><th>Accion</th></tr></thead><tbody id="tblEFE_O"></tbody></table></div>
+    <div id="emptyEFE_O" class="empty">Sin oportunidades</div>
+    <h3 class="text-red mt20">AMENAZAS</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Factor</label><input type="text" id="efe_a_factor"></div>
+        <div class="form-group"><label>Peso (0-1)</label><input type="number" id="efe_a_peso" value="0.25" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>Calif. (1-4)</label><input type="number" id="efe_a_calif" value="2" min="1" max="4"></div>
+        <button class="btn btn-primary" onclick="addEFE('A')">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Factor</th><th>Peso</th><th>Calif.</th><th>Pond.</th><th>Origen</th><th>Accion</th></tr></thead><tbody id="tblEFE_A"></tbody></table></div>
+    <div id="emptyEFE_A" class="empty">Sin amenazas</div>
+    <div class="form-row mt15"><span id="pesoTotalEFE"></span><button class="btn btn-warning btn-sm" onclick="normalizarPesosEFE()">Normalizar Pesos</button></div>
+    <button class="btn btn-success mt15" onclick="calcEFE()">Calcular EFE</button><div id="resEFE"></div></div>`;
+}
+function initEFE() { renderTablaEFE('O', D.efe.oportunidades); renderTablaEFE('A', D.efe.amenazas); actualizarPesoTotalEFE(); }
+function renderTablaEFE(tipo, arr) {
+    const tbody = document.getElementById('tblEFE_'+tipo);
+    const empty = document.getElementById('emptyEFE_'+tipo);
+    if (!tbody) return;
+    if (arr.length === 0) { tbody.innerHTML = ''; if(empty) empty.style.display='block'; return; }
+    if(empty) empty.style.display='none';
+    tbody.innerHTML = arr.map((f,i) => `
+        <tr>
+            <td>${i+1}</td>
+            <td><input type="text" value="${(f.factor||'').replace(/"/g,'&quot;')}" onchange="updateEFE('${tipo}',${i},'factor',this.value)"></td>
+            <td><input type="number" class="peso-editable" value="${(f.peso||0).toFixed(3)}" step="0.001" min="0" max="1" onchange="updateEFE('${tipo}',${i},'peso',parseFloat(this.value)||0)"></td>
+            <td><input type="number" value="${f.calificacion||0}" min="1" max="4" onchange="updateEFE('${tipo}',${i},'calificacion',parseInt(this.value)||1)"></td>
+            <td>${((f.peso||0)*(f.calificacion||0)).toFixed(3)}</td>
+            <td>${f.origen||'Manual'}</td>
+            <td><button class="btn-red" onclick="delEFE('${tipo}',${i})">X</button>
+            ${f.origen==='HOME' ? `<button class="spelling-btn" onclick="propagateSpellingFromEFE('${tipo}',${i})">↻</button>` : ''}</td>
+        </tr>`).join('');
+}
+function propagateSpellingFromEFE(tipo, i) {
+    const arr = tipo==='O' ? D.efe.oportunidades : D.efe.amenazas;
+    const entry = arr[i];
+    if (!entry || !entry.homeId) return;
+    const homeCat = tipo==='O' ? 'oportunidades' : 'amenazas';
+    propagateFactorNameChange(entry.homeId, entry.factor, homeCat);
+    updateHomeArray(homeCat, entry.homeId, 'factor', entry.factor);
+    toast('Ortografia propagada');
+}
+function addEFE(tipo) {
+    const arr = tipo==='O' ? D.efe.oportunidades : D.efe.amenazas;
+    const factor = document.getElementById(`efe_${tipo==='O'?'o':'a'}_factor`).value.trim();
+    const peso = parseFloat(document.getElementById(`efe_${tipo==='O'?'o':'a'}_peso`).value) || 0.25;
+    const calif = parseInt(document.getElementById(`efe_${tipo==='O'?'o':'a'}_calif`).value) || 3;
+    if (!factor) { toast('Ingrese el factor.'); return; }
+    arr.push({ factor, peso: Math.min(1,Math.max(0,peso)), calificacion: Math.min(4,Math.max(1,calif)), origen:'Manual' });
+    save(); initEFE(); toast('Factor agregado');
+}
+function updateEFE(tipo, i, campo, valor) {
+    const arr = tipo==='O' ? D.efe.oportunidades : D.efe.amenazas;
+    if (!arr[i]) return;
+    arr[i][campo] = valor;
+    if (campo === 'peso') arr[i].peso = Math.min(1, Math.max(0, valor));
+    if (campo === 'calificacion') arr[i].calificacion = Math.min(4, Math.max(1, valor));
+    if (campo === 'factor' && arr[i].origen==='HOME' && arr[i].homeId) {
+        const homeCat = tipo==='O' ? 'oportunidades' : 'amenazas';
+        propagateFactorNameChange(arr[i].homeId, valor, homeCat);
+        updateHomeArray(homeCat, arr[i].homeId, 'factor', valor);
+    }
+    save(); initEFE();
+}
+function delEFE(tipo, i) {
+    const arr = tipo==='O' ? D.efe.oportunidades : D.efe.amenazas;
+    const entry = arr[i];
+    if (entry && entry.homeId) {
+        const homeCat = tipo==='O' ? 'oportunidades' : 'amenazas';
+        D.home[homeCat] = D.home[homeCat].filter(f => f.id !== entry.homeId);
+        removeFromAllDerived(entry.homeId);
+    }
+    arr.splice(i,1); save(); initEFE();
+}
+function actualizarPesoTotalEFE() {
+    const total = [...D.efe.oportunidades, ...D.efe.amenazas].reduce((s,f)=>s+(f.peso||0),0);
+    const el = document.getElementById('pesoTotalEFE');
+    if (el) el.innerHTML = `<span class="peso-indicator ${Math.abs(total-1)<0.005?'peso-ok':'peso-bad'}">Suma de pesos: ${total.toFixed(3)}</span>`;
+}
+function normalizarPesosEFE() { const todos = [...D.efe.oportunidades, ...D.efe.amenazas]; normalizarPesosArray(todos); save(); initEFE(); toast('Pesos normalizados'); }
+function calcEFE() {
+    const tO = D.efe.oportunidades.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    const tA = D.efe.amenazas.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    document.getElementById('resEFE').innerHTML = `<div class="analisis"><h4>PUNTAJE EFE</h4><p>Total: <span class="score">${(tO+tA).toFixed(3)}</span>/4.00</p></div>`;
+}
+
+// ============ EFI ============
+function renderEFI() {
+    return `<div class="panel active"><div class="header"><h2>MATRIZ EFI</h2><p class="desc">Factores internos. Editable con propagacion de ortografia.</p></div>
+    <h3 class="text-green">FORTALEZAS</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Factor</label><input type="text" id="efi_f_factor"></div>
+        <div class="form-group"><label>Peso (0-1)</label><input type="number" id="efi_f_peso" value="0.25" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>Calif. (1-4)</label><input type="number" id="efi_f_calif" value="3" min="1" max="4"></div>
+        <button class="btn btn-primary" onclick="addEFI('F')">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Factor</th><th>Peso</th><th>Calif.</th><th>Pond.</th><th>Origen</th><th>Accion</th></tr></thead><tbody id="tblEFI_F"></tbody></table></div>
+    <div id="emptyEFI_F" class="empty">Sin fortalezas</div>
+    <h3 class="text-red mt20">DEBILIDADES</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Factor</label><input type="text" id="efi_d_factor"></div>
+        <div class="form-group"><label>Peso (0-1)</label><input type="number" id="efi_d_peso" value="0.25" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>Calif. (1-4)</label><input type="number" id="efi_d_calif" value="2" min="1" max="4"></div>
+        <button class="btn btn-primary" onclick="addEFI('D')">+ Agregar</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Factor</th><th>Peso</th><th>Calif.</th><th>Pond.</th><th>Origen</th><th>Accion</th></tr></thead><tbody id="tblEFI_D"></tbody></table></div>
+    <div id="emptyEFI_D" class="empty">Sin debilidades</div>
+    <div class="form-row mt15"><span id="pesoTotalEFI"></span><button class="btn btn-warning btn-sm" onclick="normalizarPesosEFI()">Normalizar Pesos</button></div>
+    <button class="btn btn-success mt15" onclick="calcEFI()">Calcular EFI</button><div id="resEFI"></div></div>`;
+}
+function initEFI() { renderTablaEFI('F', D.efi.fortalezas); renderTablaEFI('D', D.efi.debilidades); actualizarPesoTotalEFI(); }
+function renderTablaEFI(tipo, arr) {
+    const tbody = document.getElementById('tblEFI_'+tipo);
+    const empty = document.getElementById('emptyEFI_'+tipo);
+    if (!tbody) return;
+    if (arr.length === 0) { tbody.innerHTML = ''; if(empty) empty.style.display='block'; return; }
+    if(empty) empty.style.display='none';
+    tbody.innerHTML = arr.map((f,i) => `
+        <tr>
+            <td>${i+1}</td>
+            <td><input type="text" value="${(f.factor||'').replace(/"/g,'&quot;')}" onchange="updateEFI('${tipo}',${i},'factor',this.value)"></td>
+            <td><input type="number" class="peso-editable" value="${(f.peso||0).toFixed(3)}" step="0.001" min="0" max="1" onchange="updateEFI('${tipo}',${i},'peso',parseFloat(this.value)||0)"></td>
+            <td><input type="number" value="${f.calificacion||0}" min="1" max="4" onchange="updateEFI('${tipo}',${i},'calificacion',parseInt(this.value)||1)"></td>
+            <td>${((f.peso||0)*(f.calificacion||0)).toFixed(3)}</td>
+            <td>${f.origen||'Manual'}</td>
+            <td><button class="btn-red" onclick="delEFI('${tipo}',${i})">X</button>
+            ${f.origen==='HOME' ? `<button class="spelling-btn" onclick="propagateSpellingFromEFI('${tipo}',${i})">↻</button>` : ''}</td>
+        </tr>`).join('');
+}
+function propagateSpellingFromEFI(tipo, i) {
+    const arr = tipo==='F' ? D.efi.fortalezas : D.efi.debilidades;
+    const entry = arr[i];
+    if (!entry || !entry.homeId) return;
+    const homeCat = tipo==='F' ? 'fortalezas' : 'debilidades';
+    propagateFactorNameChange(entry.homeId, entry.factor, homeCat);
+    updateHomeArray(homeCat, entry.homeId, 'factor', entry.factor);
+    toast('Ortografia propagada');
+}
+function addEFI(tipo) {
+    const arr = tipo==='F' ? D.efi.fortalezas : D.efi.debilidades;
+    const factor = document.getElementById(`efi_${tipo==='F'?'f':'d'}_factor`).value.trim();
+    const peso = parseFloat(document.getElementById(`efi_${tipo==='F'?'f':'d'}_peso`).value) || 0.25;
+    const calif = parseInt(document.getElementById(`efi_${tipo==='F'?'f':'d'}_calif`).value) || 3;
+    if (!factor) { toast('Ingrese el factor.'); return; }
+    arr.push({ factor, peso: Math.min(1,Math.max(0,peso)), calificacion: Math.min(4,Math.max(1,calif)), origen:'Manual' });
+    save(); initEFI(); toast('Factor agregado');
+}
+function updateEFI(tipo, i, campo, valor) {
+    const arr = tipo==='F' ? D.efi.fortalezas : D.efi.debilidades;
+    if (!arr[i]) return;
+    arr[i][campo] = valor;
+    if (campo === 'peso') arr[i].peso = Math.min(1, Math.max(0, valor));
+    if (campo === 'calificacion') arr[i].calificacion = Math.min(4, Math.max(1, valor));
+    if (campo === 'factor' && arr[i].origen==='HOME' && arr[i].homeId) {
+        const homeCat = tipo==='F' ? 'fortalezas' : 'debilidades';
+        propagateFactorNameChange(arr[i].homeId, valor, homeCat);
+        updateHomeArray(homeCat, arr[i].homeId, 'factor', valor);
+    }
+    save(); initEFI();
+}
+function delEFI(tipo, i) {
+    const arr = tipo==='F' ? D.efi.fortalezas : D.efi.debilidades;
+    const entry = arr[i];
+    if (entry && entry.homeId) {
+        const homeCat = tipo==='F' ? 'fortalezas' : 'debilidades';
+        D.home[homeCat] = D.home[homeCat].filter(f => f.id !== entry.homeId);
+        removeFromAllDerived(entry.homeId);
+    }
+    arr.splice(i,1); save(); initEFI();
+}
+function actualizarPesoTotalEFI() {
+    const total = [...D.efi.fortalezas, ...D.efi.debilidades].reduce((s,f)=>s+(f.peso||0),0);
+    const el = document.getElementById('pesoTotalEFI');
+    if (el) el.innerHTML = `<span class="peso-indicator ${Math.abs(total-1)<0.005?'peso-ok':'peso-bad'}">Suma de pesos: ${total.toFixed(3)}</span>`;
+}
+function normalizarPesosEFI() { const todos = [...D.efi.fortalezas, ...D.efi.debilidades]; normalizarPesosArray(todos); save(); initEFI(); toast('Pesos normalizados'); }
+function calcEFI() {
+    const tF = D.efi.fortalezas.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    const tD = D.efi.debilidades.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    document.getElementById('resEFI').innerHTML = `<div class="analisis"><h4>PUNTAJE EFI</h4><p>Total: <span class="score">${(tF+tD).toFixed(3)}</span>/4.00</p></div>`;
+}
+
+// ============ MATRICES GENERICAS (PESTEL, PETS, Porter, BCG, McKinsey, PEYEA, MADE, MADI, Vul, Aprov) ============
+function renderGenericPanel(titulo, descripcion, objKey, arrKeys, multiDim, campos, labelMap) {
+    let html = `<div class="panel active"><div class="header"><h2>${titulo}</h2><p class="desc">${descripcion}</p></div>`;
+    html += `<div class="form-row">`;
+    if (multiDim) {
+        html += `<div class="form-group"><label>Categoria</label><select id="gen_${objKey}_cat">`;
+        arrKeys.forEach(k => html += `<option value="${k}">${k.toUpperCase()}</option>`);
+        html += `</select></div>`;
+    }
+    campos.forEach(c => {
+        const label = labelMap[c]||c;
+        let tipo = 'text';
+        let extra = '';
+        // Definir tipo y restricciones según campo
+        if (c==='factor'||c==='nombre'||c==='debilidad'||c==='amenaza'||c==='fortaleza'||c==='oportunidad'||c==='estrategia'||c==='descripcion'||c==='motivo') {
+            tipo = 'text';
+        } else {
+            tipo = 'number';
+            // Permitir negativos en valores que no son pesos ni calificaciones
+            if (c==='valor' || c==='impacto' || c==='potencial' || c==='crecimiento' || c==='participacion' || c==='atractivo' || c==='fortaleza' || c==='puntaje') {
+                extra = ' step="any"';
+            } else if (c==='probabilidad' || c==='peso') {
+                extra = ' min="0" max="1" step="0.01"';
+            } else if (c==='calificacion') {
+                extra = ' min="1" max="4"';
+            } else {
+                extra = ' step="any"';
+            }
+        }
+        html += `<div class="form-group"><label>${label}</label><input type="${tipo}" id="gen_${objKey}_${c}" placeholder="${label}"${extra}></div>`;
+    });
+    html += `<button class="btn btn-primary" onclick="addGeneric('${objKey}')">+ Agregar</button></div>`;
+    if (multiDim) {
+        arrKeys.forEach(d => {
+            html += `<h3>${d.toUpperCase()}</h3><div class="tbl-wrap"><table><thead><tr>${campos.map(c=>`<th>${labelMap[c]||c}</th>`).join('')}<th>Categoria</th><th>Accion</th></tr></thead><tbody id="tbl_${objKey}_${d}"></tbody></table></div>`;
+        });
+    } else {
+        html += `<div class="tbl-wrap"><table><thead><tr>${campos.map(c=>`<th>${labelMap[c]||c}</th>`).join('')}<th>Accion</th></tr></thead><tbody id="tbl_${objKey}"></tbody></table></div>`;
+    }
+    html += `<div id="empty_${objKey}" class="empty">Sin elementos</div>`;
+    if (objKey==='pestel') html += `<button class="btn btn-success mt15" onclick="calcPESTEL()">Calcular PESTEL</button><div id="resPESTEL"></div>`;
+    if (objKey==='porter') html += `<button class="btn btn-success mt15" onclick="calcPorter()">Calcular 5 Fuerzas</button><div id="resPorter"></div>`;
+    if (objKey==='vulnerabilidad') html += `<button class="btn btn-success mt15" onclick="calcVulnerabilidad()">Calcular Vulnerabilidad</button><div id="resVul"></div>`;
+    if (objKey==='aprovechabilidad') html += `<button class="btn btn-success mt15" onclick="calcAprovechabilidad()">Calcular Aprovechabilidad</button><div id="resAprov"></div>`;
+    if (objKey==='bcg') html += `<button class="btn btn-success mt15" onclick="calcBCG()">Calcular BCG</button><div id="resBCG"></div>`;
+    if (objKey==='mckinsey') html += `<button class="btn btn-success mt15" onclick="calcMcK()">Calcular McKinsey</button><div id="resMcK"></div>`;
+    if (objKey==='peyea') html += `<button class="btn btn-success mt15" onclick="calcPEYEA()">Calcular PEYEA</button><div id="resPEYEA"></div>`;
+    if (objKey==='made') html += `<button class="btn btn-success mt15" onclick="calcMADE()">Calcular MADE</button><div id="resMADE"></div>`;
+    if (objKey==='madi') html += `<button class="btn btn-success mt15" onclick="calcMADI()">Calcular MADI</button><div id="resMADI"></div>`;
+    html += `</div>`;
+    return html;
+}
+function addGeneric(objKey) {
+    const selectCat = document.getElementById(`gen_${objKey}_cat`);
+    let categoria = selectCat ? selectCat.value : Object.keys(D[objKey])[0];
+    const arr = D[objKey][categoria];
+    if (!arr) return;
+    let campos = [];
+    if (objKey==='pestel') campos=['factor','impacto','probabilidad'];
+    else if (objKey==='pets') campos=['factor','valor','probabilidad'];
+    else if (objKey==='porter') campos=['factor','valor','peso'];
+    else if (objKey==='vulnerabilidad') campos=['debilidad','amenaza','impacto'];
+    else if (objKey==='aprovechabilidad') campos=['fortaleza','oportunidad','potencial'];
+    else if (objKey==='bcg') campos=['nombre','crecimiento','participacion'];
+    else if (objKey==='mckinsey') campos=['nombre','atractivo','fortaleza'];
+    else if (objKey==='peyea') campos=['factor','valor'];
+    else if (objKey==='made') campos=['estrategia','descripcion','puntaje'];
+    else if (objKey==='madi') campos=['estrategia','motivo','puntaje'];
+    const nuevo = {};
+    for (const c of campos) {
+        const el = document.getElementById(`gen_${objKey}_${c}`);
+        if (!el || el.value.trim() === '') { toast('Complete todos los campos.'); return; }
+        let val = el.value.trim();
+        if (c==='factor'||c==='nombre'||c==='debilidad'||c==='amenaza'||c==='fortaleza'||c==='oportunidad'||c==='estrategia'||c==='descripcion'||c==='motivo') {
+            nuevo[c] = val;
+        } else {
+            let num = parseFloat(val);
+            if (isNaN(num)) { toast('Valor numerico invalido.'); return; }
+            // Aplicar restricciones solo a probabilidad, peso, calificación
+            if (c==='probabilidad'||c==='peso') num = Math.min(1, Math.max(0, num));
+            else if (c==='calificacion') num = Math.min(4, Math.max(1, num));
+            // Para los demás, permitir negativos
+            nuevo[c] = num;
+        }
+    }
+    arr.push(nuevo);
+    save();
+    campos.forEach(c => { const el = document.getElementById(`gen_${objKey}_${c}`); if(el) el.value=''; });
+    const initFn = getInitFunction(objKey); if(initFn) initFn();
+    toast(`Agregado a ${categoria}`);
+}
+function deleteGeneric(objKey, categoria, index) {
+    D[objKey][categoria].splice(index,1); save();
+    const initFn = getInitFunction(objKey); if(initFn) initFn();
+}
+function getInitFunction(objKey) {
+    return {
+        pestel: initPESTEL, pets: initPETS, porter: initPorter,
+        vulnerabilidad: initVul, aprovechabilidad: initAprov,
+        bcg: initBCG, mckinsey: initMcK, peyea: initPEYEA,
+        made: initMADE, madi: initMADI
+    }[objKey] || null;
+}
+function initGeneric(objKey, arrKeys, multiDim, campos) {
+    if (multiDim) {
+        arrKeys.forEach(d => {
+            const tbody = document.getElementById(`tbl_${objKey}_${d}`);
+            if (!tbody) return;
+            const arr = D[objKey][d] || [];
+            if (arr.length === 0) { tbody.innerHTML = `<tr><td colspan="${campos.length+2}">Sin datos</td></tr>`; return; }
+            tbody.innerHTML = arr.map((f,i) => `<tr>${campos.map(c=>`<td>${f[c]!==undefined?f[c]:''}</td>`).join('')}<td style="font-size:0.75em;color:var(--accent);">${d}</td><td><button class="btn-red" onclick="deleteGeneric('${objKey}','${d}',${i})">X</button></td></tr>`).join('');
+        });
+    } else {
+        const tbody = document.getElementById(`tbl_${objKey}`);
+        if (!tbody) return;
+        const arr = D[objKey][arrKeys[0]] || [];
+        if (arr.length === 0) { tbody.innerHTML = `<tr><td colspan="${campos.length+1}">Sin datos</td></tr>`; return; }
+        tbody.innerHTML = arr.map((f,i) => `<tr>${campos.map(c=>`<td>${f[c]!==undefined?f[c]:''}</td>`).join('')}<td><button class="btn-red" onclick="deleteGeneric('${objKey}','${arrKeys[0]}',${i})">X</button></td></tr>`).join('');
+    }
+}
+// Funciones de render para cada matriz
+function renderPESTEL() { return renderGenericPanel('MATRIZ PESTEL','','pestel',['politico','economico','social','tecnologico','ecologico','legal'],true,['factor','impacto','probabilidad'],{factor:'Factor',impacto:'Impacto (puede ser negativo)',probabilidad:'Probabilidad (0-1)'}); }
+function renderPETS() { return renderGenericPanel('MATRIZ PETS','','pets',['politico','economico','social','tecnologico'],true,['factor','valor','probabilidad'],{factor:'Factor',valor:'Valor (puede ser negativo)',probabilidad:'Probabilidad (0-1)'}); }
+function renderPorter() { return renderGenericPanel('5 FUERZAS DE PORTER','','porter',['rivalidad','nuevosEntrantes','sustitutos','poderProveedores','poderCompradores'],true,['factor','valor','peso'],{factor:'Factor',valor:'Intensidad (puede ser negativo)',peso:'Peso (0-1)'}); }
+function renderPEYEA() { return renderGenericPanel('MATRIZ PEYEA','','peyea',['ff','vc','ee','fi'],true,['factor','valor'],{factor:'Factor',valor:'Valor (puede ser negativo)'}); }
+function renderBCG() { return renderGenericPanel('MATRIZ BCG','','bcg',['productos'],false,['nombre','crecimiento','participacion'],{nombre:'Producto',crecimiento:'Crecimiento (%)',participacion:'Participacion (%)'}); }
+function renderMcK() { return renderGenericPanel('MATRIZ McKINSEY','','mckinsey',['unidades'],false,['nombre','atractivo','fortaleza'],{nombre:'Unidad',atractivo:'Atractivo (puede ser negativo)',fortaleza:'Fortaleza (puede ser negativo)'}); }
+function renderVul() { return renderGenericPanel('VULNERABILIDAD','','vulnerabilidad',['factores'],false,['debilidad','amenaza','impacto'],{debilidad:'Debilidad',amenaza:'Amenaza',impacto:'Impacto (puede ser negativo)'}); }
+function renderAprov() { return renderGenericPanel('APROVECHABILIDAD','','aprovechabilidad',['factores'],false,['fortaleza','oportunidad','potencial'],{fortaleza:'Fortaleza',oportunidad:'Oportunidad',potencial:'Potencial (puede ser negativo)'}); }
+function renderMADE() { return renderGenericPanel('MATRIZ MADE','','made',['estrategias'],false,['estrategia','descripcion','puntaje'],{estrategia:'Estrategia',descripcion:'Descripcion',puntaje:'Puntaje (puede ser negativo)'}); }
+function renderMADI() { return renderGenericPanel('MATRIZ MADI','','madi',['estrategias'],false,['estrategia','motivo','puntaje'],{estrategia:'Estrategia',motivo:'Motivo',puntaje:'Puntaje (puede ser negativo)'}); }
+// Inicializadores
+function initPESTEL(){ initGeneric('pestel',['politico','economico','social','tecnologico','ecologico','legal'],true,['factor','impacto','probabilidad']); }
+function initPETS(){ initGeneric('pets',['politico','economico','social','tecnologico'],true,['factor','valor','probabilidad']); }
+function initPorter(){ initGeneric('porter',['rivalidad','nuevosEntrantes','sustitutos','poderProveedores','poderCompradores'],true,['factor','valor','peso']); }
+function initPEYEA(){ initGeneric('peyea',['ff','vc','ee','fi'],true,['factor','valor']); }
+function initBCG(){ initGeneric('bcg',['productos'],false,['nombre','crecimiento','participacion']); }
+function initMcK(){ initGeneric('mckinsey',['unidades'],false,['nombre','atractivo','fortaleza']); }
+function initVul(){ initGeneric('vulnerabilidad',['factores'],false,['debilidad','amenaza','impacto']); }
+function initAprov(){ initGeneric('aprovechabilidad',['factores'],false,['fortaleza','oportunidad','potencial']); }
+function initMADE(){ initGeneric('made',['estrategias'],false,['estrategia','descripcion','puntaje']); }
+function initMADI(){ initGeneric('madi',['estrategias'],false,['estrategia','motivo','puntaje']); }
+
+// ============ HOLMES - INFORME INTEGRADO ============
+function renderHolmes() {
+    return `<div class="panel active"><div class="header"><h2>INFORME HOLMES</h2><p class="desc">Analisis integrado + inteligencia artificial</p></div>
+    <div class="download-bar">
+        <span>DESCARGAR:</span>
+        <button class="btn btn-pdf" onclick="descargarPDF()">PDF</button>
+        <button class="btn btn-excel" onclick="descargarExcel()">Excel</button>
+    </div>
+    <div id="resHolmes"></div>
+    <div class="ia-config">
+        <h4>Inteligencia Artificial</h4>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Proveedor de IA</label>
+                <select id="iaProvider" onchange="cambiarProveedorIA()" style="min-width:180px;">
+                    <option value="openai">OpenAI (GPT-4o-mini)</option>
+                    <option value="gemini">Google Gemini (Gemini 1.5 Flash)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="apiKeyLabel" class="red-label">CLAVE API DE OPENAI (OBLIGATORIO)</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-..." class="api-input" value="">
+            </div>
+            <button class="btn btn-sm btn-warning" onclick="guardarAPIKey()">Guardar clave</button>
+        </div>
+        <button class="btn btn-ia mt15" onclick="generarInformeIA()">Generar analisis estrategico con IA</button>
+        <div id="iaResultado" class="mt15"></div>
+    </div></div>`;
+}
+
+function initHolmes() {
+    // --- Calcular indicadores de todas las matrices ---
+    const efeO = D.efe.oportunidades.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    const efeA = D.efe.amenazas.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    const efeT = efeO + efeA;
+    const efiF = D.efi.fortalezas.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    const efiD = D.efi.debilidades.reduce((s,f)=>s+(f.peso||0)*(f.calificacion||0),0);
+    const efiT = efiF + efiD;
+    const fodaF = D.foda.fortalezas.reduce((s,x)=>s+(x.valor||0),0);
+    const fodaO = D.foda.oportunidades.reduce((s,x)=>s+(x.valor||0),0);
+    const fodaD = D.foda.debilidades.reduce((s,x)=>s+(x.valor||0),0);
+    const fodaA = D.foda.amenazas.reduce((s,x)=>s+(x.valor||0),0);
+    const balanceFODA = (fodaF+fodaO) - (fodaD+fodaA);
+    const vuln = D.vulnerabilidad.factores;
+    const vulnProm = vuln.length ? vuln.reduce((s,f)=>s+(f.impacto||0),0)/vuln.length : 0;
+    const aprov = D.aprovechabilidad.factores;
+    const aprovProm = aprov.length ? aprov.reduce((s,f)=>s+(f.potencial||0),0)/aprov.length : 0;
+    // PEYEA
+    const peyeaFF = D.peyea.ff.reduce((s,f)=>s+(f.valor||0),0)/(D.peyea.ff.length||1);
+    const peyeaVC = D.peyea.vc.reduce((s,f)=>s+(f.valor||0),0)/(D.peyea.vc.length||1);
+    const peyeaEE = D.peyea.ee.reduce((s,f)=>s+(f.valor||0),0)/(D.peyea.ee.length||1);
+    const peyeaFI = D.peyea.fi.reduce((s,f)=>s+(f.valor||0),0)/(D.peyea.fi.length||1);
+    const posicionPEYEA = (peyeaFF+peyeaVC) > (peyeaEE+peyeaFI) ? 'Agresiva' : 'Defensiva';
+    // BCG
+    const bcgData = D.bcg.productos;
+    const bcgPromCrec = bcgData.length ? bcgData.reduce((s,p)=>s+(p.crecimiento||0),0)/bcgData.length : 0;
+    const bcgPromPart = bcgData.length ? bcgData.reduce((s,p)=>s+(p.participacion||0),0)/bcgData.length : 0;
+    // McKinsey
+    const mckData = D.mckinsey.unidades;
+    const mckPromAtract = mckData.length ? mckData.reduce((s,u)=>s+(u.atractivo||0),0)/mckData.length : 0;
+    const mckPromFort = mckData.length ? mckData.reduce((s,u)=>s+(u.fortaleza||0),0)/mckData.length : 0;
+    // MADE y MADI
+    const madeProm = D.made.estrategias.length ? D.made.estrategias.reduce((s,e)=>s+(e.puntaje||0),0)/D.made.estrategias.length : 0;
+    const madiProm = D.madi.estrategias.length ? D.madi.estrategias.reduce((s,e)=>s+(e.puntaje||0),0)/D.madi.estrategias.length : 0;
+
+    // Puntaje global HOLMES (ajustado para negativos)
+    const pGlobal = (efeT + efiT + aprovProm + (5 - vulnProm)) / 4;
+
+    // Construir informe
+    let html = `<div class="analisis"><h4>PUNTAJE GLOBAL HOLMES</h4><p style="font-size:3em;">${pGlobal.toFixed(2)}/5.00</p></div>`;
+
+    // Diagnóstico por matriz
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0;">`;
+    html += `<div class="grid-card"><h5>EFE</h5><div class="val ${efeT>=2.5?'text-green':'text-red'}">${efeT.toFixed(2)}</div><div style="font-size:0.8em;">/4.00</div></div>`;
+    html += `<div class="grid-card"><h5>EFI</h5><div class="val ${efiT>=2.5?'text-green':'text-red'}">${efiT.toFixed(2)}</div><div style="font-size:0.8em;">/4.00</div></div>`;
+    html += `<div class="grid-card"><h5>Balance FODA</h5><div class="val ${balanceFODA>=0?'text-green':'text-red'}">${balanceFODA.toFixed(2)}</div></div>`;
+    html += `<div class="grid-card"><h5>Vulnerabilidad</h5><div class="val ${vulnProm<2.5?'text-green':'text-red'}">${vulnProm.toFixed(2)}</div><div style="font-size:0.8em;">(1-5)</div></div>`;
+    html += `<div class="grid-card"><h5>Aprovechabilidad</h5><div class="val ${aprovProm>=3?'text-green':'text-red'}">${aprovProm.toFixed(2)}</div><div style="font-size:0.8em;">(1-5)</div></div>`;
+    html += `<div class="grid-card"><h5>PEYEA</h5><div><span class="badge">${posicionPEYEA}</span></div><div style="font-size:0.8em;">FF:${peyeaFF.toFixed(1)} VC:${peyeaVC.toFixed(1)} EE:${peyeaEE.toFixed(1)} FI:${peyeaFI.toFixed(1)}</div></div>`;
+    html += `<div class="grid-card"><h5>BCG</h5><div>Crec: ${bcgPromCrec.toFixed(1)}%</div><div>Part: ${bcgPromPart.toFixed(1)}%</div></div>`;
+    html += `<div class="grid-card"><h5>McKinsey</h5><div>Atract: ${mckPromAtract.toFixed(2)}</div><div>Fort: ${mckPromFort.toFixed(2)}</div></div>`;
+    html += `<div class="grid-card"><h5>MADE</h5><div>${madeProm.toFixed(2)}</div><div style="font-size:0.8em;">/10</div></div>`;
+    html += `<div class="grid-card"><h5>MADI</h5><div>${madiProm.toFixed(2)}</div><div style="font-size:0.8em;">/10</div></div>`;
+    html += `</div>`;
+
+    // Recomendaciones estratégicas integradas
+    html += `<div class="analisis" style="border-color:var(--green);"><h4>RECOMENDACIONES ESTRATEGICAS</h4>`;
+    const recomendaciones = [];
+
+    // 1. Cruce EFI vs EFE
+    if (efiT < 2.5 && efeT >= 2.5) {
+        recomendaciones.push('La empresa tiene un entorno externo favorable pero debilidades internas. Priorizar la mejora de procesos internos y el desarrollo de capacidades para aprovechar las oportunidades del mercado.');
+    } else if (efiT >= 2.5 && efeT < 2.5) {
+        recomendaciones.push('La organizacion es internamente fuerte pero enfrenta un entorno externo desafiante. Enfocar en la innovacion y la diversificacion para reducir la exposicion a amenazas externas.');
+    } else if (efiT < 2.5 && efeT < 2.5) {
+        recomendaciones.push('Situacion critica: tanto el entorno como la posicion interna son debiles. Se recomienda una reestructuracion profunda y considerar alianzas estrategicas para sobrevivir.');
+    } else {
+        recomendaciones.push('Posicion equilibrada. Mantener el rumbo, pero buscar continuamente oportunidades de mejora y vigilancia del entorno.');
+    }
+
+    // 2. Balance FODA
+    if (balanceFODA > 0) {
+        recomendaciones.push('El balance FODA es positivo: las fortalezas y oportunidades superan a las debilidades y amenazas. Aprovechar este impulso para crecer y consolidar la posicion en el mercado.');
+    } else {
+        recomendaciones.push('El balance FODA es negativo. Es urgente trabajar en las debilidades internas y desarrollar planes de contingencias para las amenazas.');
+    }
+
+    // 3. Vulnerabilidad y Aprovechabilidad
+    if (vulnProm > 3.5) {
+        recomendaciones.push('Alta vulnerabilidad. Implementar un plan de mitigacion de riesgos y fortalecer los controles internos.');
+    } else if (vulnProm < 2) {
+        recomendaciones.push('Baja vulnerabilidad. La empresa esta bien protegida, pero no debe confiarse; mantener la vigilancia.');
+    }
+    if (aprovProm >= 3.5) {
+        recomendaciones.push('Alta capacidad de aprovechamiento. Potenciar las alianzas y la inversion en areas de oportunidad identificadas.');
+    } else if (aprovProm < 2.5) {
+        recomendaciones.push('Baja aprovechabilidad. Revisar la estrategia comercial y la asignacion de recursos para capturar mejor el potencial del mercado.');
+    }
+
+    // 4. PEYEA
+    if (posicionPEYEA === 'Agresiva') {
+        recomendaciones.push('La posicion PEYEA indica una estrategia agresiva: la empresa tiene fortalezas financieras y competitivas. Apostar por el crecimiento, la expansion y la toma de riesgos calculados.');
+    } else {
+        recomendaciones.push('La posicion PEYEA es defensiva: el entorno es incierto y la empresa debe proteger sus recursos. Priorizar la eficiencia, la reduccion de costos y la consolidacion.');
+    }
+
+    // 5. BCG
+    if (bcgPromCrec > 10 && bcgPromPart > 15) {
+        recomendaciones.push('Los productos tienen alta participacion y crecimiento (Estrellas). Invertir para mantener el liderazgo.');
+    } else if (bcgPromCrec > 10 && bcgPromPart < 15) {
+        recomendaciones.push('Productos con alto crecimiento pero baja participacion (Interrogantes). Decidir si invertir para convertirlos en estrellas o desinvertir.');
+    } else if (bcgPromCrec < 10 && bcgPromPart > 15) {
+        recomendaciones.push('Productos maduros con alta participacion (Vacas lecheras). Generan flujo de caja; usarlos para financiar otras areas.');
+    } else {
+        recomendaciones.push('Productos con bajo crecimiento y baja participacion (Perros). Considerar desinversion o reestructuracion.');
+    }
+
+    // 6. McKinsey
+    if (mckPromAtract > 3.5 && mckPromFort > 3.5) {
+        recomendaciones.push('Las unidades de negocio son muy atractivas y fuertes (Invertir y crecer).');
+    } else if (mckPromAtract > 3.5 && mckPromFort < 2.5) {
+        recomendaciones.push('Mercado atractivo pero posicion debil. Estrategia de construir o compartir.');
+    } else if (mckPromAtract < 2.5 && mckPromFort > 3.5) {
+        recomendaciones.push('Posicion fuerte en mercado poco atractivo. Generar flujo y evaluar salida a largo plazo.');
+    } else {
+        recomendaciones.push('Mercado poco atractivo y posicion debil. Considerar desinversion o reorientacion.');
+    }
+
+    // 7. MADE y MADI
+    if (madeProm >= 7 && madiProm >= 7) {
+        recomendaciones.push('Las estrategias MADE y MADI tienen alta puntuacion. Implementar con prioridad y monitorear resultados.');
+    } else if (madeProm >= 7 && madiProm < 5) {
+        recomendaciones.push('MADE bien valorada pero MADI baja. Revisar la viabilidad o el timing de las estrategias.');
+    } else if (madeProm < 5 && madiProm >= 7) {
+        recomendaciones.push('MADI alta pero MADE baja. Las estrategias son deseables pero poco factibles; buscar alianzas o recursos adicionales.');
+    } else {
+        recomendaciones.push('Tanto MADE como MADI son bajas. Es necesario replantear las estrategias desde cero.');
+    }
+
+    // Unir recomendaciones con viñetas
+    html += `<ul style="list-style:none;padding:0;margin:10px 0;">`;
+    recomendaciones.forEach((rec, idx) => {
+        html += `<li style="padding:8px 12px;margin:6px 0;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid var(--accent);">${idx+1}. ${rec}</li>`;
+    });
+    html += `</ul></div>`;
+
+    document.getElementById('resHolmes').innerHTML = html;
+
+    // Guardar datos para IA
+    window._holmesData = {
+        efeT, efiT, balanceFODA, vulnProm, aprovProm,
+        peyeaFF, peyeaVC, peyeaEE, peyeaFI, posicionPEYEA,
+        bcgPromCrec, bcgPromPart,
+        mckPromAtract, mckPromFort,
+        madeProm, madiProm,
+        pGlobal
+    };
+
+    // Inicializar proveedor de IA y prellenar clave
+    const provider = localStorage.getItem('ia_provider') || 'openai';
+    const select = document.getElementById('iaProvider');
+    if (select) select.value = provider;
+    cambiarProveedorIA(true);
+}
+
+function cambiarProveedorIA(initOnly) {
+    const providerSelect = document.getElementById('iaProvider');
+    if (!providerSelect) return;
+    const provider = providerSelect.value;
+    if (!initOnly) {
+        localStorage.setItem('ia_provider', provider);
+    }
+    
+    const label = document.getElementById('apiKeyLabel');
+    const input = document.getElementById('apiKeyInput');
+    if (provider === 'openai') {
+        if (label) {
+            label.textContent = 'CLAVE API DE OPENAI (OBLIGATORIO)';
+        }
+        if (input) {
+            input.placeholder = 'sk-...';
+            input.value = localStorage.getItem('openai_api_key') || '';
+        }
+    } else if (provider === 'gemini') {
+        if (label) {
+            label.textContent = 'CLAVE API DE GEMINI (OBLIGATORIO)';
+        }
+        if (input) {
+            input.placeholder = 'AIzaSy...';
+            input.value = localStorage.getItem('gemini_api_key') || '';
+        }
+    }
+}
+
+function guardarAPIKey() {
+    const provider = document.getElementById('iaProvider')?.value || 'openai';
+    const key = document.getElementById('apiKeyInput').value.trim();
+    if (provider === 'openai') {
+        localStorage.setItem('openai_api_key', key);
+    } else {
+        localStorage.setItem('gemini_api_key', key);
+    }
+    toast('Clave API guardada localmente');
+}
+
+async function generarInformeIA() {
+    const provider = document.getElementById('iaProvider')?.value || 'openai';
+    let apiKey = '';
+    if (provider === 'openai') {
+        apiKey = localStorage.getItem('openai_api_key') || document.getElementById('apiKeyInput').value.trim();
+        if (!apiKey.startsWith('sk-')) {
+            document.getElementById('iaResultado').innerHTML = '<span style="color:var(--red);">ERROR: INGRESA UNA API KEY VALIDA DE OPENAI (COMIENZA CON sk-).</span>';
+            return;
+        }
+    } else {
+        apiKey = localStorage.getItem('gemini_api_key') || document.getElementById('apiKeyInput').value.trim();
+        if (!apiKey) {
+            document.getElementById('iaResultado').innerHTML = '<span style="color:var(--red);">ERROR: INGRESA UNA API KEY VALIDA DE GEMINI.</span>';
+            return;
+        }
+    }
+
+    const data = window._holmesData || {};
+    const resumen = {
+        puntajeGlobal: data.pGlobal?.toFixed(2) || 'N/D',
+        efe: data.efeT?.toFixed(2),
+        efi: data.efiT?.toFixed(2),
+        balanceFODA: data.balanceFODA?.toFixed(2),
+        vulnerabilidad: data.vulnProm?.toFixed(2),
+        aprovechabilidad: data.aprovProm?.toFixed(2),
+        peyea: { ff: data.peyeaFF?.toFixed(2), vc: data.peyeaVC?.toFixed(2), ee: data.peyeaEE?.toFixed(2), fi: data.peyeaFI?.toFixed(2), posicion: data.posicionPEYEA },
+        bcg: { crecimiento: data.bcgPromCrec?.toFixed(1), participacion: data.bcgPromPart?.toFixed(1) },
+        mckinsey: { atractivo: data.mckPromAtract?.toFixed(2), fortaleza: data.mckPromFort?.toFixed(2) },
+        made: data.madeProm?.toFixed(2),
+        madi: data.madiProm?.toFixed(2)
+    };
+    const prompt = `Eres un consultor estrategico senior. Basandote en los siguientes datos de un analisis empresarial integrado, redacta un informe ejecutivo con:
+- Diagnostico general de la posicion estrategica (1 parrafo).
+- Tres fortalezas clave y como aprovecharlas.
+- Tres riesgos principales y acciones para mitigarlos.
+- Una recomendacion prioritaria para los proximos 6 meses, que integre los resultados de todas las matrices.
+
+Datos del analisis:
+${JSON.stringify(resumen, null, 2)}`;
+
+    document.getElementById('iaResultado').innerHTML = '<span style="color:var(--accent);">Generando analisis con IA...</span>';
+    try {
+        let texto = '';
+        if (provider === 'openai') {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.5, max_tokens: 1200 })
+            });
+            if (!response.ok) throw new Error(`Error ${response.status}: ${await response.text()}`);
+            const resData = await response.json();
+            texto = resData.choices[0].message.content;
+        } else {
+            // Google Gemini API (con sistema de fallback para modelos y endpoints)
+            const geminiEndpoints = [
+                `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+            ];
+            let lastError = null;
+            for (const url of geminiEndpoints) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { temperature: 0.5, maxOutputTokens: 1200 }
+                        })
+                    });
+                    if (response.ok) {
+                        const resData = await response.json();
+                        if (resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts) {
+                            texto = resData.candidates[0].content.parts[0].text;
+                            break; // Se obtuvo respuesta exitosa
+                        } else {
+                            throw new Error("Respuesta de Gemini vacía o en formato inesperado.");
+                        }
+                    } else {
+                        const errText = await response.text();
+                        lastError = new Error(`API Error ${response.status}: ${errText}`);
+                        // Si es 404 (model not found), intentamos con el siguiente endpoint de la lista
+                        if (response.status === 404 || errText.includes("not found") || errText.includes("supported")) {
+                            continue;
+                        } else {
+                            break; // Si es un error de credenciales (400/403) o cuota, detenemos la iteración
+                        }
+                    }
+                } catch (e) {
+                    lastError = e;
+                }
+            }
+            if (!texto) {
+                throw lastError || new Error("No se pudo obtener respuesta de ningún modelo de Gemini.");
+            }
+        }
+        
+        document.getElementById('iaResultado').innerHTML = `<div class="analisis"><h4>INFORME GENERADO POR IA</h4><p style="white-space:pre-wrap;">${texto}</p></div>`;
+        toast('Analisis IA completado');
+    } catch (error) {
+        document.getElementById('iaResultado').innerHTML = `<span style="color:var(--red);">Error al conectar con la IA: ${error.message}</span>`;
+    }
+}
+
+function descargarPDF() { window.print(); }
+function descargarExcel() { toast('Excel descargado (simulacion)'); }
+
+// ============ INICIALIZACION ============
+function initPanel(panelId) {
+    const inits = {
+        home: initHome, foda: initFODA, pestel: initPESTEL, pets: initPETS, porter: initPorter,
+        efe: initEFE, efi: initEFI, vulnerabilidad: initVul, aprovechabilidad: initAprov,
+        bcg: initBCG, mckinsey: initMcK, peyea: initPEYEA, made: initMADE, madi: initMADI, holmes: initHolmes
+    };
+    if (inits[panelId]) inits[panelId]();
+}
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        document.body.classList.add('dark-theme');
+        updateThemeButton(true);
+    } else {
+        document.body.classList.remove('dark-theme');
+        updateThemeButton(false);
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeButton(isDark);
+}
+
+function updateThemeButton(isDark) {
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        btn.innerHTML = isDark ? '<span class="icon">☀️</span> Modo Claro' : '<span class="icon">🌙</span> Modo Oscuro';
+    }
+}
+
+initTheme();
+load(); render('home');
+</script>
+</body>
+</html>
